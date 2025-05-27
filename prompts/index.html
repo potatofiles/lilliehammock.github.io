@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🌀 Writing Prompt Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lato', sans-serif;
+      background-color: #001a24;
+      background-image:
+        radial-gradient(ellipse at bottom, #0a1f1c 0%, #001a24 100%),
+        url('https://transparenttextures.com/patterns/stardust.png');
+      background-blend-mode: screen;
+      color: #f0e9e4;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .glass-card {
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 650px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      color: #ffffff;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2em;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+      white-space: pre-line;
+      color: #eae3dc;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1em;
+      background-color: #7f5e68;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #a27884;
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-card">
+    <h1>🌀 Writing Prompt Generator</h1>
+    <p id="prompt">Click below to receive your prompt.</p>
+    <button onclick="generatePrompt()">✨ Give Me a Prompt</button>
+  </div>
+
+  <script>
+    const prompts = [
+      "A letter arrives from the future with one cryptic sentence.",
+      "A door appears in your house that wasn’t there before.",
+      "You wake up to find the world has completely forgotten you exist.",
+      "A deal with a trickster god goes horribly wrong (or surprisingly right).",
+      "Someone’s reflection in the mirror starts acting independently.",
+      "The villain won. Now what?",
+      "A conversation with a cat changes everything.",
+      "You are given 24 hours to commit a perfect crime.",
+      "A dream starts bleeding into reality.",
+      "The moon disappears from the sky."
+    ];
+
+    const genres = [
+      "High Fantasy", "Psychological Horror", "Gothic Romance", "Absurdist Comedy", "Sci-Fi Noir",
+      "Cosmic Horror", "Mythological Retelling", "Post-Apocalyptic Slice of Life", "Time Travel Thriller", "Cyberpunk Heist"
+    ];
+
+    const moods = [
+      "Melancholy but hopeful", "Unhinged chaos", "Quietly eerie", "Heart-wrenching longing", "Otherworldly and dreamlike",
+      "Rage-fueled but poetic", "Tender and bittersweet", "Grand and operatic", "Quiet and creeping dread", "Playful but dark"
+    ];
+
+    const wildCards = [
+      "A seemingly minor superstition turns out to be real.",
+      "Include a cursed object that changes hands multiple times.",
+      "The story must take place over the course of one hour.",
+      "A character has a secret they don't even know they have.",
+      "Include a fictional book that influences the plot."
+    ];
+
+    function generatePrompt() {
+      const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+      const genre = genres[Math.floor(Math.random() * genres.length)];
+      const mood = moods[Math.floor(Math.random() * moods.length)];
+      const wildCard = wildCards[Math.floor(Math.random() * wildCards.length)];
+      const coin = Math.random() < 0.5 ? "Heads — it's a comedy" : "Tails — not a comedy";
+
+      document.getElementById('prompt').innerText =
+        `📜 Prompt: ${prompt}\n🎭 Genre: ${genre}\n🌙 Vibe: ${mood}\n🃏 Wild Card: ${wildCard}\n💥 Coin Flip: ${coin}`;
+    }
+  </script>
+</body>
+</html>
