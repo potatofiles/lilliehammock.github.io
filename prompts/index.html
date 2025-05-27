@@ -68,7 +68,7 @@
 <body>
   <div class="glass-card">
     <h1>🌀 Writing Prompt Generator</h1>
-    <p id="prompt">Click below to receive your prompt.</p>
+    <p id="prompt" style="text-align: left; white-space: pre-line;"></p>
     <button onclick="generatePrompt()">✨ Inspire Me ✨ </button>
   </div>
 
@@ -104,16 +104,20 @@
       "Include a fictional book that influences the plot."
     ];
 
-    function generatePrompt() {
-      const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-      const genre = genres[Math.floor(Math.random() * genres.length)];
-      const mood = moods[Math.floor(Math.random() * moods.length)];
-      const wildCard = wildCards[Math.floor(Math.random() * wildCards.length)];
-      const coin = Math.random() < 0.5 ? "Heads — it's a comedy" : "Tails — not a comedy";
+function generatePrompt() {
+  const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+  const genre = genres[Math.floor(Math.random() * genres.length)];
+  const mood = moods[Math.floor(Math.random() * moods.length)];
+  const wildCard = wildCards[Math.floor(Math.random() * wildCards.length)];
+  const coin = Math.random() < 0.5 ? "Heads — it's a comedy" : "Tails — not a comedy";
 
-      document.getElementById('prompt').innerText =
-        `📜 Prompt: ${prompt}\n🎭 Genre: ${genre}\n🌙 Vibe: ${mood}\n🃏 Wild Card: ${wildCard}\n💥 Coin Flip: ${coin}`;
-    }
+  document.getElementById('prompt').innerHTML =
+    `<strong>📜 Prompt:</strong> ${prompt}\n` +
+    `<strong>🎭 Genre:</strong> ${genre}\n` +
+    `<strong>🌙 Vibe:</strong> ${mood}\n` +
+    `<strong>🃏 Wild Card:</strong> ${wildCard}\n` +
+    `<strong>💥 Coin Flip:</strong> ${coin}`;
+}
   </script>
 </body>
 </html>
