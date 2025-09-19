@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trip Planner — Day / Trip / Location Views</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #12141a;
+      --muted: #c4c7cf;
+      --text: #f1f5f9;
+      --brand: #4f46e5;
+      --flight: #0ea5e9;
+      --train: #22c55e;
+      --other: #f59e0b;
+      --activity: #a78bfa; /* purple */
+      --grid: #2a2f3a;
+      --radius: 16px;
+      --toastbg: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(180deg, #0e1116, #0a0c10 30%); color: var(--text); }
+    header { padding: 16px 24px; border-bottom: 1px solid #1f2430; position: sticky; top: 0; background: rgba(11,12,16,0.9); backdrop-filter: blur(6px); z-index: 20; }
+    header h1 { margin: 0 0 8px; font-size: 20px; letter-spacing: .2px; }
+    .tabs { display:flex; gap:8px; }
+    .tab { appearance:none; border:1px solid #2a3142; background:#141826; color:#cbd5e1; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:600; font-size:13px; }
+    .tab.active { background: var(--brand); border-color: transparent; color: #fff; }
+
+    .container { display: grid; grid-template-columns: 390px 1fr; gap: 18px; padding: 18px 24px 28px; align-items: start; }
+
+    .card { background: var(--panel); border: 1px solid #1f2430; border-radius: var(--radius); box-shadow: 0 6px 22px rgba(0,0,0,.35); }
+    .card h2 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+    .card .head { padding: 16px 16px 6px; border-bottom: 1px solid #1b2030; }
+    .card .body { padding: 14px 16px 16px; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    label { font-size: 12px; color: #a7adbb; display:block; margin-bottom: 6px; }
+    select, input[type="date"], input[type="time"], input[type="file"], input[type="text"], input[type="datetime-local"], textarea, button { width: 100%; background: #0f1219; color: var(--text); border: 1px solid #252a38; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+    button { cursor: pointer; background: var(--brand); border-color: transparent; font-weight: 600; }
+    button.secondary { background: #1f2430; border: 1px solid #2a3142; }
+
+    .calendarShell { background: var(--panel); border: 1px solid #1f2430; border-radius: var(--radius); overflow: hidden; }
+    .calendarHeader { display:flex; justify-content: space-between; align-items:center; padding: 14px 16px; border-bottom:1px solid #1b2030; }
+    .calendarHeader h3 { margin:0; font-size:16px; font-weight:600; }
+
+    /* Day view timeline */
+    .calendar { position: relative; height: 960px; background: linear-gradient(180deg, #0d1017, #0a0d14); }
+    .hours { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid #1b2030; }
+    .hourRow { position: absolute; left: 0; width: 100%; height: 40px; border-bottom: 1px dashed var(--grid); color: #cbd5e1; font-size: 12px; display:flex; align-items:flex-start; padding-top:2px; padding-left: 8px; }
+    .timeline { position: absolute; left: 64px; right: 0; top:0; bottom:0; }
+    .halfHour { position: absolute; left: 0; right: 0; height: 20px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+    .block { position: absolute; left: 72px; right: 16px; border-radius: 12px; padding: 10px 12px; color: #0b0c10; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,0.15); }
+    .block .sub { display:block; font-weight:500; opacity:.85; color:#0b0c10; font-size:12px; margin-top:2px; }
+    .flight { background: rgba(14,165,233,.85); }
+    .train { background: rgba(34,197,94,.88); }
+    .other { background: rgba(245,158,11,.88); }
+    .activity { background: rgba(167,139,250,.92); }
+
+    .pill { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background:#121827; border:1px solid #2a3142; border-radius:999px; font-size:12px; color:#cbd5e1; }
+    .legend { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .help { font-size:12px; color:#a7adbb; }
+    .tiny { font-size:11px; color:#94a3b8; }
+    .kbd {font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:#0f1219; border:1px solid #2a3142; padding:1px 6px; border-radius:6px; font-size:12px;}
+
+    /* Trip view: multi-day Outlook-style */
+    .tripCal { position: relative; height: 960px; background: linear-gradient(180deg, #0d1017, #0a0d14); overflow: hidden; }
+    .tripHours { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; border-right: 1px solid #1b2030; }
+    .tripCols { position: absolute; left: 64px; right: 0; top: 0; bottom: 0; display: grid; gap: 8px; overflow-x: auto; padding: 0 8px 0 0; }
+    .dayCol { position: relative; background: #0f1219; border: 1px solid #1b2030; border-radius: 12px; overflow: hidden; min-width: 240px; }
+    .dayHead { padding: 8px 10px; font-weight: 700; font-size: 13px; color:#e2e8f0; border-bottom:1px solid #1b2030; background: #0f1522; position: sticky; top: 0; z-index: 5; }
+    .dayBody { position: relative; height: calc(100% - 36px); }
+    .tripHalf { position: absolute; left: 0; right: 0; height: 20px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .tripBlock { position: absolute; left: 8px; right: 8px; border-radius: 10px; padding: 8px 10px; color: #0b0c10; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,0.12); }
+
+    /* Toast */
+    #toast { position: fixed; right: 16px; bottom: 16px; background: var(--toastbg); color:#e5e7eb; border:1px solid #243041; border-radius:12px; padding:10px 14px; box-shadow: 0 10px 24px rgba(0,0,0,.35); opacity:0; pointer-events:none; transition: opacity .2s ease; z-index:9999; }
+    #toast.show { opacity: 1; }
+
+    /* Hide/show helpers */
+    .hidden { display:none !important; }
+
+    @media (max-width: 980px){
+      .container { grid-template-columns: 1fr; }
+      .calendar .block { left: 12px; right: 12px; }
+      .timeline { left: 52px; }
+      .hours { width: 48px; }
+      .tripHours { width: 48px; }
+      .dayCol { min-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trip Planner — Day / Trip / Location</h1>
+    <div class="tabs">
+      <button class="tab active" data-tab="day">Day</button>
+      <button class="tab" data-tab="trip">Trip</button>
+      <button class="tab" data-tab="location">Location</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- LEFT: Controls -->
+    <section class="card">
+      <div class="head"><h2>Data & Controls</h2></div>
+      <div class="body">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px">
+          <div>
+            <label style="margin:0">Transportation CSV</label>
+            <input id="fileTrans" type="file" accept=".csv" />
+          </div>
+          <div>
+            <label style="margin:0">Activities CSV (optional)</label>
+            <input id="fileActs" type="file" accept=".csv" />
+          </div>
+          <button id="loadSample" class="secondary" title="Load demo data">Load sample</button>
+        </div>
+        <p class="help">Export your Excel table(s) as CSV. Delimiters <b>comma</b>, <b>semicolon</b>, or <b>tab</b> are supported.<br>
+          <b>Transportation</b> → headers like <span class="kbd">Mode, Location, Description, Start Date/Time, End Date/Time, Duration, Price, OptionLabel</span><br>
+          <b>Activities</b> → headers like <span class="kbd">Title, Location, Start Date/Time, End Date/Time, Notes, Price, Category</span><br>
+          (Common variations like <i>Start</i>/<i>End</i>, <i>Type</i>, <i>Activity Name</i> are auto-recognized.)
+        </p>
+
+        <div class="grid2" style="margin-top:14px">
+          <div>
+            <label for="tripStart">Trip start</label>
+            <input id="tripStart" type="date" />
+          </div>
+          <div>
+            <label for="tripEnd">Trip end</label>
+            <input id="tripEnd" type="date" />
+          </div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap">
+          <button id="tripUseData" class="secondary">Use range from data</button>
+          <button id="tripApply" class="secondary">Apply dates</button>
+        </div>
+
+        <div class="grid2" style="margin-top:14px">
+          <div>
+            <label for="daySelect">Day (Day view)</label>
+            <select id="daySelect"></select>
+          </div>
+          <div>
+            <label for="modeFilter">Filter by Mode</label>
+            <select id="modeFilter">
+              <option value="">All</option>
+              <option>Train</option>
+              <option>Flight</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="legControls" style="margin-top:14px" class="grid3">
+          <div>
+            <label for="leg1">Leg 1</label>
+            <select id="leg1"></select>
+          </div>
+          <div>
+            <label for="leg2">Leg 2</label>
+            <select id="leg2"></select>
+          </div>
+          <div>
+            <label for="leg3">Leg 3</label>
+            <select id="leg3"></select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" id="legend" class="legend"></div>
+
+        <details style="margin-top:14px">
+          <summary class="tiny" style="cursor:pointer">Quick add item (manually add a transport or activity)</summary>
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <label>Type</label>
+              <select id="qaType"><option>Transportation</option><option>Activity</option></select>
+            </div>
+            <div>
+              <label>Mode / Category</label>
+              <input id="qaModeCat" type="text" placeholder="Train / Flight / Tour / Food..." />
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <label>Location</label>
+              <input id="qaLoc" type="text" placeholder="Tashkent / Almaty..." />
+            </div>
+            <div>
+              <label>Title / Description</label>
+              <input id="qaTitle" type="text" placeholder="Option label or activity title" />
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <label>Start</label>
+              <input id="qaStart" type="datetime-local" />
+            </div>
+            <div>
+              <label>End</label>
+              <input id="qaEnd" type="datetime-local" />
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <label>Price</label>
+              <input id="qaPrice" type="text" placeholder="$" />
+            </div>
+            <div>
+              <label>Notes (optional)</label>
+              <input id="qaNotes" type="text" />
+            </div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px">
+            <button id="qaAdd" class="secondary">Add to planner</button>
+            <span class="tiny">(Manual adds live for this session; re‑upload CSVs later to persist.)</span>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- RIGHT: Views -->
+    <section class="calendarShell" id="view-day">
+      <div class="calendarHeader">
+        <h3 id="dayTitle">Select a day</h3>
+        <div class="tiny" id="summary"></div>
+      </div>
+      <div class="calendar" id="calendar-day">
+        <div class="hours" id="hours-day"></div>
+        <div class="timeline" id="timeline-day"></div>
+      </div>
+    </section>
+
+    <section class="calendarShell hidden" id="view-trip">
+      <div class="calendarHeader"><h3>Trip view — Outlook‑style</h3><div class="tiny" id="tripSummary"></div></div>
+      <div class="tripCal" id="tripCal">
+        <div class="tripHours" id="tripHours"></div>
+        <div class="tripCols" id="tripCols"></div>
+      </div>
+    </section>
+
+    <section class="calendarShell hidden" id="view-location">
+      <div class="calendarHeader"><h3 id="locTitle">Location view</h3></div>
+      <div class="calendar" id="calendar-loc">
+        <div class="hours" id="hours-loc"></div>
+        <div class="timeline" id="timeline-loc"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // ---------- Toast helper ----------
+    function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=> t.classList.remove('show'), 2500); }
+
+    // ---------- Helpers ----------
+    const byId = (id) => document.getElementById(id);
+    const fmtTime = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const fmtDateTitle = (d) => d.toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'});
+    const fmtDayShort = (d) => d.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'});
+    const stripDollar = (s) => (s || '').toString().replace(/\$/g,'');
+
+    // Smart delimiter + resilient CSV
+    function detectDelimiter(text){
+      const first = (text.split(/\r?\n/)[0]||'');
+      const c = (d)=> (first.match(new RegExp((d==='\t'?'\t':d).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g'))||[]).length;
+      const list = [{d:',' ,n:c(',')},{d:';' ,n:c(';')},{d:'\t',n:c('\t')}].sort((a,b)=>b.n-a.n);
+      return (list[0].n>0? list[0].d : ',');
+    }
+
+    function parseCSV(text){
+      const delim = detectDelimiter(text);
+      const rows = [];
+      let i = 0, cur = '', inQ = false, row = [];
+      const pushCell = () => { row.push(cur); cur=''; }
+      const pushRow = () => { if(row.length && row.some(c => c!=='')) rows.push(row); row=[]; }
+      while(i < text.length){
+        const ch = text[i];
+        if(ch === '"'){
+          if(inQ && text[i+1] === '"'){ cur+='"'; i++; }
+          else inQ = !inQ;
+        } else if(ch === delim && !inQ){ pushCell(); }
+        else if((ch === '\n' || ch === '\r') && !inQ){ pushCell(); pushRow(); if(ch==='\r' && text[i+1]==='\n') i++; }
+        else cur += ch;
+        i++;
+      }
+      if(cur!=='' || inQ) { pushCell(); }
+      if(row.length) pushRow();
+      if(rows.length===0) return [];
+      const rawHeaders = rows.shift().map(h => h.trim());
+      const mapKey = (h)=>{
+        const k = h.toLowerCase().replace(/[\s_\-/()]+/g,'');
+        if(['mode','transport','transportmode','type'].includes(k)) return 'Mode';
+        if(['location','city','place'].includes(k)) return 'Location';
+        if(['description','desc','details'].includes(k)) return 'Description';
+        if(['start','startdatetime','startdate','datetime','starttime'].includes(k)) return 'Start Date/Time';
+        if(['end','enddatetime','enddate','endtime'].includes(k)) return 'End Date/Time';
+        if(['duration','dur'].includes(k)) return 'Duration';
+        if(['price','cost'].includes(k)) return 'Price';
+        if(['optionlabel','option','label'].includes(k)) return 'OptionLabel';
+        if(['title','name','activity','activityname'].includes(k)) return 'Title';
+        if(['category','cat','typecategory'].includes(k)) return 'Category';
+        if(['notes','note'].includes(k)) return 'Notes';
+        return h; // keep original if we don't know it
+      };
+      const headers = rawHeaders.map(mapKey);
+      return rows.map(r => {
+        const obj={}; headers.forEach((h,idx)=> obj[h]= (r[idx] ?? '').trim()); return obj;
+      });
+    }
+
+    // Robust date parsing (supports 10/14/2025 6:33, 14/10/2025 06:33, 2025-10-14 06:33, etc.)
+    function parseDateSmart(str){
+      if(!str) return null;
+      if(str instanceof Date) return str;
+      // ISO first
+      const isoTry = new Date(str);
+      if(!isNaN(isoTry)) return isoTry;
+      // Common numeric formats
+      const m = String(str).match(/^(\d{1,4})[\/-](\d{1,2})[\/-](\d{1,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(AM|PM))?)?$/i);
+      if(m){
+        let a=parseInt(m[1],10), b=parseInt(m[2],10), c=parseInt(m[3],10);
+        const hh = parseInt(m[4]||'0',10), mm = parseInt(m[5]||'0',10), ss = parseInt(m[6]||'0',10);
+        const ampm=(m[7]||'').toUpperCase();
+        let y, M, d;
+        if(String(a).length===4){ // YYYY-MM-DD
+          y=a; M=b; d=c;
+        } else if(String(c).length===4){ // MM/DD/YYYY or DD/MM/YYYY
+          y=c; if(a>12){ d=a; M=b; } else { M=a; d=b; }
+        } else { // fallback
+          y=c; M=a; d=b;
+        }
+        let H = hh;
+        if(ampm==='PM' && H<12) H+=12; if(ampm==='AM' && H===12) H=0;
+        const dt = new Date(y, M-1, d, H, mm, ss);
+        if(!isNaN(dt)) return dt;
+      }
+      return null;
+    }
+
+    function toDate(val){ return parseDateSmart(val); }
+    function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+    function endOfDay(d){ const x = new Date(d); x.setHours(24,0,0,0); return x; }
+    function minutesSinceStartOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
+    function clampOverlap(seg, day){ const s = toDate(seg["Start Date/Time"]), e = toDate(seg["End Date/Time"]); if(!s || !e) return null; const ds=startOfDay(day), de=endOfDay(day); const a=new Date(Math.max(s, ds)), b=new Date(Math.min(e, de)); if(b<=a) return null; return [minutesSinceStartOfDay(a), minutesSinceStartOfDay(b)]; }
+
+    // Color utilities: reserved for Train/Flight; dynamic for everything else
+    function hashCode(str){ let h=0; for(let i=0;i<str.length;i++){ h=((h<<5)-h) + str.charCodeAt(i); h|=0; } return Math.abs(h); }
+    function colorFromKey(key){ const h = hashCode(key) % 360; const s = 70; const l = 55; return `hsl(${h} ${s}% ${l}%)`; }
+    function modeKey(seg){ const m=(seg.Mode||'').trim(); const c=(seg.Category||'').trim(); if(m) return m.toLowerCase(); if(c) return c.toLowerCase(); return 'other'; }
+    function blockStyle(seg){ const key = modeKey(seg); if(key.includes('flight')) return { cls:'flight', bg:null }; if(key.includes('train')) return { cls:'train', bg:null }; if(seg.Category){ return { cls:'activity', bg: colorFromKey(seg.Category) }; } return { cls:'other', bg: colorFromKey(key) }; }
+
+    // ---------- State ----------
+    let transport = []; // array of objects
+    let activities = []; // array of objects (optional)
+    let selections = {}; // { isoDay: {leg1: obj|null, leg2: obj|null, leg3: obj|null} }
+
+    function computeDataRange(){ const times = []; const add = (d)=>{ if(d) times.push(startOfDay(d).getTime()); }; transport.forEach(r=>{ add(toDate(r["Start Date/Time"])); add(toDate(r["End Date/Time"])); }); activities.forEach(r=>{ add(toDate(r["Start Date/Time"])); add(toDate(r["End Date/Time"])); }); if(!times.length){ return {start:null, end:null}; } const min = new Date(Math.min(...times)); const max = new Date(Math.max(...times)); return { start: min, end: max }; }
+    function setTripInputsFromRange(){ const {start, end} = computeDataRange(); if(!start || !end) return; byId('tripStart').value = start.toISOString().slice(0,10); byId('tripEnd').value = end.toISOString().slice(0,10); }
+    function getTripRange(){ const s = byId('tripStart').value, e = byId('tripEnd').value; if(!s || !e) return null; return {start: new Date(s+'T00:00:00'), end: new Date(e+'T00:00:00')}; }
+    function daysBetween(start, end){ const out=[]; if(!start || !end) return out; let d = new Date(start); while(d <= end){ out.push(new Date(d)); d.setDate(d.getDate()+1); } return out; }
+
+    // ---------- Rendering: Day View ----------
+    function renderGrid(hoursEl, timelineEl, container){ hoursEl.innerHTML = ''; timelineEl.innerHTML=''; const totalMinutes=24*60; const ppm = container.clientHeight/totalMinutes; for(let h=0; h<=24; h++){ const row=document.createElement('div'); row.className='hourRow'; row.style.top=(h*60*ppm)+'px'; row.style.height=(60*ppm)+'px'; row.textContent=(h<10?'0':'')+h+':00'; hoursEl.appendChild(row); } for(let m=0; m<totalMinutes; m+=30){ const line=document.createElement('div'); line.className='halfHour'; line.style.top=(m*ppm)+'px'; timelineEl.appendChild(line);} }
+
+    function drawBlocksOnTimeline(timelineEl, containerEl, day, segments){ const totalMinutes=24*60; const ppm=containerEl.clientHeight/totalMinutes; Array.from(timelineEl.querySelectorAll('.block')).forEach(n=>n.remove()); if(!day) return; segments.forEach(seg=>{ if(!seg) return; const rng=clampOverlap(seg, day); if(!rng) return; const [startMin, endMin]=rng; const top=startMin*ppm; const height=Math.max(18,(endMin-startMin)*ppm); const s=toDate(seg["Start Date/Time"]), e=toDate(seg["End Date/Time"]); const label= seg.OptionLabel || seg.Title || seg.Description || ''; const st = blockStyle(seg); const div=document.createElement('div'); div.className=`block ${st.cls}`; if(st.bg) { div.style.background = st.bg; } div.style.top=top+'px'; div.style.height=height+'px'; div.innerHTML = `<div>${label}</div><span class="sub">${fmtTime(s)} → ${fmtTime(e)} · ${(seg.Mode||seg.Category||'').toString()} ${seg.Price?(' · '+seg.Price):''}</span>`; timelineEl.appendChild(div); }); }
+
+    // Day view elements
+    const calDay = byId('calendar-day');
+    const hoursDay = byId('hours-day');
+    const timeDay = byId('timeline-day');
+
+    function optionsForDay(day, modeFilter){ return transport.filter(r=>{ if(modeFilter && r.Mode !== modeFilter) return false; const s=toDate(r["Start Date/Time"]); if(!s) return false; const e=toDate(r["End Date/Time"]); if(!e) return false; const ds=startOfDay(day).getTime(), de=endOfDay(day).getTime(); return e.getTime()>ds && s.getTime()<de; }).sort((a,b)=> new Date(a["Start Date/Time"]) - new Date(b["Start Date/Time"])) }
+
+    function fillDropdown(sel, opts){ sel.innerHTML=''; const blank=document.createElement('option'); blank.value=''; blank.textContent='— none —'; sel.appendChild(blank); opts.forEach((o, idx)=>{ const op=document.createElement('option'); op.value=idx; op.textContent=o.OptionLabel || `${o.Description||''} (${o.Mode||''})`; sel.appendChild(op); }); sel.dataset.count=opts.length; }
+
+    function saveSelection(day, legId, obj){ const iso = startOfDay(day).toISOString(); if(!selections[iso]) selections[iso]={leg1:null, leg2:null, leg3:null}; selections[iso][legId] = obj || null; }
+    function restoreSelectionIntoDropdown(day, legId, opts, selEl){ const iso=startOfDay(day).toISOString(); const picked=selections[iso]?.[legId]; if(!picked){ selEl.selectedIndex=0; return; } const idx=opts.findIndex(o=> (o.OptionLabel||'')===(picked.OptionLabel||'')); selEl.selectedIndex = idx>=0? idx+1 : 0; }
+
+    function activitiesForDay(day){ if(!day || !activities.length) return []; return activities.filter(a=>{ const s=toDate(a["Start Date/Time"]), e=toDate(a["End Date/Time"]); if(!s||!e) return false; return e>startOfDay(day) && s<endOfDay(day); }); }
+
+    function refreshDayPicker(){ const daySel = byId('daySelect'); daySel.innerHTML=''; const tr = getTripRange(); const days = tr? daysBetween(tr.start, tr.end) : []; days.forEach((d,i)=>{ const op=document.createElement('option'); op.value=d.toISOString(); op.textContent=fmtDayShort(d); if(i===0) op.selected=true; daySel.appendChild(op); }); }
+
+    function populateLegDropdowns(){ const dayVal = byId('daySelect').value; if(!dayVal) return; const day = new Date(dayVal); const mode = byId('modeFilter').value; const opts = optionsForDay(day, mode); fillDropdown(byId('leg1'), opts); fillDropdown(byId('leg2'), opts); fillDropdown(byId('leg3'), opts); restoreSelectionIntoDropdown(day, 'leg1', opts, byId('leg1')); restoreSelectionIntoDropdown(day, 'leg2', opts, byId('leg2')); restoreSelectionIntoDropdown(day, 'leg3', opts, byId('leg3')); }
+
+    function drawDay(){ const dayVal = byId('daySelect').value; const day = dayVal? new Date(dayVal) : null; renderGrid(hoursDay, timeDay, calDay); byId('dayTitle').textContent = day? fmtDateTitle(day) : 'Select a day'; const mode = byId('modeFilter').value; const opts = day? optionsForDay(day, mode) : []; const picks = [byId('leg1'), byId('leg2'), byId('leg3')].map(sel=>{ const idx = sel.selectedIndex-1; return (idx>=0 && day)? opts[idx] : null; }); const merged = picks.concat(activitiesForDay(day)); drawBlocksOnTimeline(timeDay, calDay, day, merged); const priceList = picks.filter(Boolean).map(x=> x.Price).filter(Boolean).map(stripDollar); byId('summary').textContent = priceList.length? `Selected prices: $${priceList.join(' · $')}`: ''; }
+
+    // ---------- Rendering: Trip View (multi-day Outlook-style) ----------
+    function renderTripGrid(){ const tr = getTripRange(); const colsEl = byId('tripCols'); const hoursEl = byId('tripHours'); const cal = byId('tripCal'); colsEl.innerHTML=''; hoursEl.innerHTML=''; if(!tr) return; const days = daysBetween(tr.start, tr.end); const totalMinutes=24*60; const ppm=cal.clientHeight/totalMinutes; for(let h=0; h<=24; h++){ const row=document.createElement('div'); row.className='hourRow'; row.style.top=(h*60*ppm)+'px'; row.style.height=(60*ppm)+'px'; row.textContent=(h<10?'0':'')+h+':00'; hoursEl.appendChild(row); } colsEl.style.gridTemplateColumns = `repeat(${days.length}, minmax(240px, 1fr))`; days.forEach(day=>{ const col=document.createElement('div'); col.className='dayCol'; const head=document.createElement('div'); head.className='dayHead'; head.textContent=fmtDayShort(day); const body=document.createElement('div'); body.className='dayBody'; for(let m=0; m<totalMinutes; m+=30){ const line=document.createElement('div'); line.className='tripHalf'; line.style.top=(m*ppm)+'px'; body.appendChild(line); } const iso=startOfDay(day).toISOString(); const picks=(selections[iso]||{}); const segs=[picks.leg1, picks.leg2, picks.leg3].filter(Boolean); if(activities.length){ const acts=activities.filter(a=>{ const s=toDate(a["Start Date/Time"]), e=toDate(a["End Date/Time"]); if(!s||!e) return false; return e>startOfDay(day) && s<endOfDay(day); }); segs.push(...acts); } segs.forEach(seg=>{ const rng=clampOverlap(seg, day); if(!rng) return; const [startMin, endMin]=rng; const top=startMin*ppm; const height=Math.max(18,(endMin-startMin)*ppm); const label= seg.OptionLabel || seg.Title || seg.Description || ''; const st = blockStyle(seg); const d=document.createElement('div'); d.className=`tripBlock ${st.cls}`; if(st.bg){ d.style.background = st.bg; } d.style.top=top+'px'; d.style.height=height+'px'; d.title = `${label}\n${fmtTime(toDate(seg["Start Date/Time"]))} → ${fmtTime(toDate(seg["End Date/Time"]))}`; d.textContent = label; body.appendChild(d); }); col.appendChild(head); col.appendChild(body); colsEl.appendChild(col); }); }
+
+    // ---------- Rendering: Legend (auto-detect categories) ----------
+    function updateLegend(){ const el = byId('legend'); el.innerHTML=''; const addPill=(label, color)=>{ const span=document.createElement('span'); span.className='pill'; span.innerHTML = `<span style="width:10px;height:10px;border-radius:999px;${color?`background:${color};`:''}"></span>${label}`; el.appendChild(span); };
+      // Reserved
+      addPill('Train', getComputedStyle(document.documentElement).getPropertyValue('--train'));
+      addPill('Flight', getComputedStyle(document.documentElement).getPropertyValue('--flight'));
+      // Dynamic from transport modes (excluding train/flight)
+      const modes = Array.from(new Set(transport.map(t=> (t.Mode||'').trim()).filter(Boolean))).sort();
+      modes.forEach(m=>{ const low=m.toLowerCase(); if(low.includes('train')||low.includes('flight')) return; addPill(m, colorFromKey(m)); });
+      // Dynamic from activity categories
+      const cats = Array.from(new Set(activities.map(a=> (a.Category||'').trim()).filter(Boolean))).sort();
+      cats.forEach(c=> addPill(c, colorFromKey(c)));
+    }
+
+    // ---------- Location View ----------
+    function refreshLocationList(){ const sel = byId('locFilter'); if(!sel) return; sel.innerHTML=''; const locs = Array.from(new Set([ ...transport.map(t=>t.Location).filter(Boolean), ...activities.map(a=>a.Location).filter(Boolean) ])).sort(); const blank=document.createElement('option'); blank.value=''; blank.textContent='— choose —'; sel.appendChild(blank); locs.forEach(L=>{ const op=document.createElement('option'); op.value=L; op.textContent=L; sel.appendChild(op); }); }
+
+    function drawLocation(){ const loc = byId('locFilter')?.value; const dayVal = byId('daySelect').value; const day = dayVal? new Date(dayVal): null; const hours = byId('hours-loc'), timeline = byId('timeline-loc'); const cal = byId('calendar-loc'); renderGrid(hours, timeline, cal); byId('locTitle').textContent = loc? `Location: ${loc}${day? ' — '+fmtDateTitle(day): ''}` : 'Location view'; const chosen = []; if(day){ const iso = startOfDay(day).toISOString(); const pick = selections[iso] || {}; [pick.leg1, pick.leg2, pick.leg3].forEach(seg=>{ if(!seg) return; const text=(seg.Location||'')+' '+(seg.Description||'')+' '+(seg.OptionLabel||''); if(!loc || text.toLowerCase().includes(loc.toLowerCase())) chosen.push(seg); }); } if(day && activities.length){ const acts=activities.filter(a=>{ const s=toDate(a["Start Date/Time"]), e=toDate(a["End Date/Time"]); if(!s||!e) return false; const match=!loc || ((a.Location||'').toLowerCase().includes(loc.toLowerCase())); return match && (e>startOfDay(day) && s<endOfDay(day)); }); chosen.push(...acts); } drawBlocksOnTimeline(timeline, cal, day, chosen); }
+
+    // ---------- Data loading & init ----------
+    const sampleTransport = `Mode,Location,Description,Start Date/Time,End Date/Time,Duration,Price,OptionLabel\nTrain,,Tashkent-Samarkand,10/14/2025 6:33,10/14/2025 8:46,2:13,$32.06,Tashkent-Samarkand | 10/14 6:33 → 10/14 8:46\nTrain,,Tashkent-Samarkand,10/14/2025 8:00,10/14/2025 10:25,2:25,$32.06,Tashkent-Samarkand | 10/14 8:00 → 10/14 10:25\nTrain,,Tashkent-Samarkand,10/14/2025 13:15,10/14/2025 17:02,3:47,$25.51,Tashkent-Samarkand | 10/14 13:15 → 10/14 17:02\nTrain,,Samarkand-Bukhara,10/15/2025 11:55,10/15/2025 14:10,2:15,$12.38,Samarkand-Bukhara | 10/15 11:55 → 10/15 14:10\nTrain,,Bukhara-Samarkand,10/15/2025 21:32,10/16/2025 0:41,3:09,$13.31,Bukhara-Samarkand | 10/15 21:32 → 10/16 0:41\nTrain,,Samarkand-Tashkent,10/16/2025 8:05,10/16/2025 11:54,3:49,$14.43,Samarkand-Tashkent | 10/16/2025 8:05 → 10/16/2025 11:54\nFlight,,Tashkent-Almaty,10/16/2025 19:10,10/16/2025 20:40,1:30,$78.00,Tashkent-Almaty | 10/16 19:10 → 10/16 20:40\nFlight,,Bishkek-Tashkent,10/21/2025 14:15,10/21/2025 14:35,0:20,$82.00,Bishkek-Tashkent | 10/21 14:15 → 10/21 14:35`;
+    const sampleActivities = `Title,Location,Start Date/Time,End Date/Time,Notes,Price,Category\nRegistan tour,Samarkand,10/14/2025 10:00,10/14/2025 12:00,,,$$\nPlov dinner,Tashkent,10/16/2025 18:00,10/16/2025 19:00,,,$$`;
+
+    function initAfterData(){ setTripInputsFromRange(); refreshDayPicker(); populateLegDropdowns(); renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day')); drawDay(); renderTripGrid(); drawLocation(); updateLegend(); }
+
+    byId('loadSample').addEventListener('click', ()=>{ transport=parseCSV(sampleTransport); activities=parseCSV(sampleActivities); selections={}; initAfterData(); toast(`Loaded sample: ${transport.length} transport, ${activities.length} activities`); });
+    byId('fileTrans').addEventListener('change', e=>{ const f=e.target.files[0]; if(!f) return; const rdr=new FileReader(); rdr.onload=()=>{ transport=parseCSV(rdr.result); selections={}; initAfterData(); toast(`Loaded transportation: ${transport.length} rows`); }; rdr.readAsText(f); });
+    byId('fileActs').addEventListener('change', e=>{ const f=e.target.files[0]; if(!f) return; const rdr=new FileReader(); rdr.onload=()=>{ activities=parseCSV(rdr.result); initAfterData(); toast(`Loaded activities: ${activities.length} rows`); }; rdr.readAsText(f); });
+
+    byId('daySelect').addEventListener('change', ()=>{ populateLegDropdowns(); drawDay(); drawLocation(); });
+    byId('modeFilter').addEventListener('change', ()=>{ populateLegDropdowns(); drawDay(); });
+
+    ['leg1','leg2','leg3'].forEach(id=> byId(id).addEventListener('change', ()=>{ const dayVal = byId('daySelect').value; if(!dayVal) return; const day = new Date(dayVal); const mode = byId('modeFilter').value; const opts = optionsForDay(day, mode); const idx = byId(id).selectedIndex - 1; const obj = idx>=0? opts[idx] : null; saveSelection(day, id, obj); drawDay(); renderTripGrid(); drawLocation(); }));
+
+    byId('tripUseData').addEventListener('click', ()=>{ setTripInputsFromRange(); refreshDayPicker(); populateLegDropdowns(); drawDay(); renderTripGrid(); drawLocation(); toast('Trip range set from data.'); });
+    byId('tripApply').addEventListener('click', ()=>{ refreshDayPicker(); populateLegDropdowns(); drawDay(); renderTripGrid(); drawLocation(); toast('Trip range applied.'); });
+
+    // Quick Add logic — stores local-format strings for robust parsing
+    function fmtLocalNoTZ(dt){ const p=(n)=> String(n).padStart(2,'0'); return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())} ${p(dt.getHours())}:${p(dt.getMinutes())}`; }
+    byId('qaAdd').addEventListener('click', ()=>{
+      const type = byId('qaType').value;
+      const modecat = byId('qaModeCat').value.trim();
+      const loc = byId('qaLoc').value.trim();
+      const title = byId('qaTitle').value.trim();
+      const start = byId('qaStart').value; // datetime-local
+      const end = byId('qaEnd').value;
+      const price = byId('qaPrice').value.trim();
+      const notes = byId('qaNotes').value.trim();
+      if(!start || !end){ alert('Start and End required.'); return; }
+      const sdt = new Date(start); const edt = new Date(end);
+      const startStr = fmtLocalNoTZ(sdt); const endStr = fmtLocalNoTZ(edt);
+      if(type === 'Transportation'){
+        const obj = { Mode: modecat||'Other', Location: loc, Description: title, Price: price, OptionLabel: title || `${loc} | ${startStr} → ${endStr}`, "Start Date/Time": startStr, "End Date/Time": endStr };
+        transport.push(obj);
+      } else {
+        const obj = { Title: title||modecat||'Activity', Location: loc, Category: modecat||'Activity', Notes: notes, Price: price, "Start Date/Time": startStr, "End Date/Time": endStr };
+        activities.push(obj);
+      }
+      const tr = getTripRange(); const sd = startOfDay(sdt), ed = startOfDay(edt);
+      if(!tr || sd < tr.start || ed > tr.end){ byId('tripStart').value = (tr? (sd<tr.start? sd: tr.start): sd).toISOString().slice(0,10); byId('tripEnd').value = (tr? (ed>tr.end? ed: tr.end): ed).toISOString().slice(0,10); }
+      refreshDayPicker(); updateLegend(); renderTripGrid(); drawLocation(); drawDay();
+      toast('Added!');
+    });
+
+    // Tabs: ensure Trip view renders in-place (no weird offset)
+    document.querySelectorAll('.tab').forEach(btn=> btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(b=> b.classList.remove('active')); btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      byId('view-day').classList.toggle('hidden', tab!=='day');
+      byId('view-trip').classList.toggle('hidden', tab!=='trip');
+      byId('view-location').classList.toggle('hidden', tab!=='location');
+      if(tab==='day'){ renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day')); drawDay(); }
+      if(tab==='trip'){ renderTripGrid(); byId('tripCal').scrollTop = 0; }
+      if(tab==='location'){ drawLocation(); }
+    }));
+
+    // Reflow on resize so blocks stay aligned
+    window.addEventListener('resize', ()=>{ const active = document.querySelector('.tab.active')?.dataset.tab; if(active==='day'){ renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day')); drawDay(); } if(active==='trip'){ renderTripGrid(); } if(active==='location'){ drawLocation(); } });
+
+    // Initial empty grids
+    renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day'));
+    renderGrid(byId('hours-loc'), byId('timeline-loc'), byId('calendar-loc'));
+    updateLegend();
+  </script>
+</body>
+</html>
