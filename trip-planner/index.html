@@ -469,6 +469,25 @@
 
     // Reflow on resize so blocks stay aligned
     window.addEventListener('resize', ()=>{ const active = document.querySelector('.tab.active')?.dataset.tab; if(active==='day'){ renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day')); drawDay(); } if(active==='trip'){ renderTripGrid(); } if(active==='location'){ drawLocation(); } });
+<script>
+// --- Auto-preload transportation.csv if present (same folder as index.html) ---
+window.addEventListener('load', async () => {
+  try {
+    const res = await fetch('./transportation.csv', { cache: 'no-store' });
+    if (res.ok) {
+      const text = await res.text();
+      transport = parseCSV(text);   // uses the parser already in your file
+      selections = {};
+      initAfterData();               // builds the Day/Trip/Location views
+      toast(`Preloaded transportation: ${transport.length} rows`);
+    } else {
+      console.log('transportation.csv not found (optional preload).');
+    }
+  } catch (e) {
+    console.warn('Preload failed:', e);
+  }
+});
+</script>
 
     // Initial empty grids
     renderGrid(byId('hours-day'), byId('timeline-day'), byId('calendar-day'));
