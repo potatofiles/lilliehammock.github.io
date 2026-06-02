@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ireland & Scotland — Rate the Stops</title>
+<style>
+  :root {
+    --bg: #181f12;
+    --bg2: #1e2817;
+    --card: #22301a;
+    --card2: #283d1e;
+    --border: rgba(140,180,80,0.12);
+    --border2: rgba(140,180,80,0.22);
+    --text: #e8e2d0;
+    --text2: #a8b898;
+    --text3: #6a7d58;
+    --green: #7cba3f;
+    --green2: #9ed45a;
+    --green-dark: #4a7a22;
+    --brown: #8b6340;
+    --brown-light: #c49a6c;
+    --brown-dark: #5a3e24;
+    --cream: #e8dfc4;
+    --slate: #4a5a3a;
+    --gorse: #d4a832;
+    --low: #c0392b;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    padding: 0 0 6rem;
+  }
+
+  .site-header {
+    text-align: center;
+    padding: 3.5rem 1.5rem 2rem;
+    background: linear-gradient(180deg, #0f1a09 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border2);
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,186,63,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .site-header h1 {
+    font-size: 2rem;
+    font-weight: normal;
+    letter-spacing: 0.08em;
+    color: var(--green2);
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+
+  .site-header p {
+    font-size: 0.88rem;
+    color: var(--text2);
+    font-style: italic;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .traveler-bar {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    background: rgba(24,31,18,0.97);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    border-bottom: 1px solid var(--border2);
+    gap: 0;
+  }
+
+  .t-btn {
+    padding: 0.55rem 1.6rem;
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-family: inherit;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .t-btn:first-child { border-radius: 6px 0 0 6px; }
+  .t-btn:last-child { border-radius: 0 6px 6px 0; }
+  .t-btn:not(:first-child) { border-left: none; }
+
+  .t-btn.active {
+    background: var(--green-dark);
+    color: var(--green2);
+    border-color: var(--green);
+    font-weight: bold;
+  }
+
+  .t-btn:hover:not(.active) {
+    background: rgba(124,186,63,0.07);
+    color: var(--text2);
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .region-header {
+    padding: 2.5rem 1.5rem 0.75rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .region-header h2 {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gorse);
+    border-bottom: 1px solid rgba(212,168,50,0.2);
+    padding-bottom: 0.6rem;
+  }
+
+  .stops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+  }
+
+  .stop-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .stop-card:hover {
+    border-color: var(--border2);
+    transform: translateY(-2px);
+  }
+
+  .photo-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 62%;
+    overflow: hidden;
+    background: #111a0a;
+  }
+
+  .photo-wrap img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    filter: brightness(0.85) saturate(1.1);
+  }
+
+  .stop-card:hover .photo-wrap img {
+    transform: scale(1.04);
+  }
+
+  .photo-placeholder {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text3);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    background: var(--bg2);
+  }
+
+  .score-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: bold;
+    background: rgba(24,31,18,0.88);
+    color: var(--text);
+    border: 2px solid var(--border2);
+    opacity: 0;
+    transition: all 0.2s;
+  }
+
+  .score-badge.visible { opacity: 1; }
+
+  .card-body {
+    padding: 1rem 1.1rem 1.2rem;
+  }
+
+  .card-name {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--cream);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.01em;
+  }
+
+  .card-desc {
+    font-size: 0.78rem;
+    color: var(--text2);
+    line-height: 1.55;
+    font-style: italic;
+    margin-bottom: 1rem;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .slider-end-label {
+    font-size: 0.6rem;
+    color: var(--text3);
+    line-height: 1.3;
+    text-align: center;
+    min-width: 28px;
+  }
+
+  .score-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--slate);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .score-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--green);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    transition: transform 0.15s, background 0.15s;
+  }
+
+  .score-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: var(--green2);
+  }
+
+  .score-slider::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--green);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  .score-num {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--green);
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 0.65rem;
+  }
+
+  .tag {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid rgba(124,186,63,0.2);
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .sticky-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(24,31,18,0.97);
+    border-top: 1px solid var(--border2);
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    backdrop-filter: blur(8px);
+    z-index: 99;
+  }
+
+  .footer-progress {
+    font-size: 0.78rem;
+    color: var(--text2);
+  }
+
+  .footer-progress span { color: var(--green2); font-weight: bold; }
+
+  .btn-results {
+    padding: 0.6rem 1.5rem;
+    background: var(--green-dark);
+    color: var(--green2);
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.2s;
+  }
+
+  .btn-results:hover { background: #3a5a1a; }
+
+  .results-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .results-title {
+    font-size: 1.4rem;
+    font-weight: normal;
+    color: var(--green2);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+  }
+
+  .results-sub {
+    font-size: 0.84rem;
+    color: var(--text2);
+    font-style: italic;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .result-region-block { margin-bottom: 2rem; }
+
+  .result-region-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gorse);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(212,168,50,0.18);
+    margin-bottom: 0.75rem;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(124,186,63,0.06);
+  }
+
+  .result-row:last-child { border-bottom: none; }
+
+  .result-name { flex: 1; font-size: 0.9rem; color: var(--text); }
+
+  .score-pill {
+    font-size: 0.78rem;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 20px;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .score-high { background: rgba(124,186,63,0.15); color: var(--green2); }
+  .score-mid  { background: rgba(212,168,50,0.12); color: var(--gorse); }
+  .score-low  { background: rgba(90,62,36,0.3);    color: var(--brown-light); }
+  .score-none { background: rgba(60,60,60,0.2);    color: var(--text3); }
+
+  .combined-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .badge-fire   { background: rgba(124,186,63,0.18); color: var(--green2); }
+  .badge-strong { background: rgba(212,168,50,0.15); color: var(--gorse); }
+  .badge-split  { background: rgba(139,99,64,0.2);   color: var(--brown-light); }
+  .badge-low    { background: rgba(60,70,50,0.2);    color: var(--text3); }
+
+  .conflict-card {
+    background: rgba(139,99,64,0.12);
+    border: 1px solid rgba(139,99,64,0.3);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.84rem;
+    color: var(--brown-light);
+    line-height: 1.6;
+  }
+
+  .conflict-card strong { display: block; margin-bottom: 0.25rem; color: var(--cream); }
+
+  .section-head {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .itinerary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.6rem;
+    border-left: 3px solid var(--green-dark);
+  }
+
+  .itin-day  { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gorse); margin-bottom: 0.2rem; }
+  .itin-title { font-size: 0.95rem; font-weight: bold; color: var(--cream); margin-bottom: 0.3rem; }
+  .itin-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.55; font-style: italic; }
+
+  .back-btn {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.5rem 1.1rem;
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .back-btn:hover { border-color: var(--green); color: var(--green2); }
+
+  @media (max-width: 600px) {
+    .stops-grid { grid-template-columns: 1fr; gap: 1rem; padding: 0.75rem 1rem; }
+    .site-header h1 { font-size: 1.4rem; }
+    .result-name { font-size: 0.82rem; }
+    .t-btn { padding: 0.5rem 0.9rem; font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <h1>Ireland &amp; Scotland</h1>
+  <p>Scroll through every stop. Rate each one 1–10. Then compare with your travel companion.</p>
+</div>
+
+<div class="traveler-bar">
+  <button class="t-btn active" onclick="switchTab('p1')">Traveler 1</button>
+  <button class="t-btn" onclick="switchTab('p2')">Traveler 2</button>
+  <button class="t-btn" onclick="switchTab('results')">Compare</button>
+</div>
+
+<div id="view-p1" class="view active"></div>
+<div id="view-p2" class="view"></div>
+<div id="view-results" class="view">
+  <div class="results-wrap" id="results-content"></div>
+</div>
+
+<div class="sticky-footer">
+  <div class="footer-progress">
+    <span id="footer-rated">0</span> of <span id="footer-total">27</span> rated
+    &nbsp;·&nbsp; <span id="footer-person">Traveler 1</span>
+  </div>
+  <button class="btn-results" onclick="switchTab('results')">See Results →</button>
+</div>
+
+<script>
+const STOPS = [
+  { id:"newgrange", region:"Dublin & Meath", name:"Newgrange",
+    desc:"Older than Stonehenge and the pyramids. A Neolithic passage tomb aligned with the winter solstice sunrise. One hour north of Dublin.",
+    tags:["ancient","weird","unmissable"],
+    photo:"https://images.unsplash.com/photo-1590075865003-e48277faa558?w=700&q=80" },
+  { id:"wicklow", region:"East Ireland", name:"Wicklow Mountains & Glendalough",
+    desc:"Ancient monastic ruins in a glacial valley. Eerie, quiet, genuinely moving. Easy day trip from Dublin.",
+    tags:["nature","ancient","hiking"],
+    photo:"https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=700&q=80" },
+  { id:"rock_cashel", region:"South Ireland", name:"Rock of Cashel",
+    desc:"Medieval cathedral on a dramatic rocky outcrop in Tipperary. One of the most iconic sites in Ireland and consistently overlooked.",
+    tags:["castle","history","architecture"],
+    photo:"https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=700&q=80" },
+  { id:"burren", region:"West Ireland", name:"The Burren",
+    desc:"Lunar limestone karst landscape with Bronze Age tombs and wildflowers growing through the cracks. Looks like nothing else on Earth.",
+    tags:["weird","nature","ancient"],
+    photo:"https://images.unsplash.com/photo-1599484789002-10d88dcb7590?w=700&q=80" },
+  { id:"cliffs_moher", region:"West Ireland", name:"Cliffs of Moher",
+    desc:"700 feet straight into the Atlantic. Yes it's busy. Still jaw-dropping. Right next to the Burren so you do both in one sweep.",
+    tags:["nature","iconic","coast"],
+    photo:"https://images.unsplash.com/photo-1590506694271-9ef3ca1f3ede?w=700&q=80" },
+  { id:"connemara", region:"West Ireland", name:"Connemara",
+    desc:"Bogland, dark mountains, silent lakes. The most dramatic and ancient-feeling landscape in Ireland. Almost no one.",
+    tags:["nature","remote","landscape"],
+    photo:"https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700&q=80" },
+  { id:"kylemore", region:"West Ireland", name:"Kylemore Abbey",
+    desc:"Gothic abbey on the edge of a lake deep in Connemara. Absurdly beautiful. Right on the road.",
+    tags:["architecture","landscape"],
+    photo:"https://images.unsplash.com/photo-1551871812-10ecc21ffa2f?w=700&q=80" },
+  { id:"aran_islands", region:"West Ireland", name:"Aran Islands",
+    desc:"Remote islands off Galway. Ancient stone forts on cliff edges. Irish still spoken. Ferry can cancel in bad weather.",
+    tags:["remote","weird","ancient"],
+    photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80" },
+  { id:"dingle", region:"Southwest Ireland", name:"Dingle Peninsula",
+    desc:"Better than Ring of Kerry, less crowded. Beautiful coastal drive, dramatic headlands, excellent seafood.",
+    tags:["coast","nature","food"],
+    photo:"https://images.unsplash.com/photo-1564760290292-23341e4df6ec?w=700&q=80" },
+  { id:"skellig_michael", region:"Southwest Ireland", name:"Skellig Michael",
+    desc:"A remote rock island with a 6th century monastery at the top. 600 ancient stone steps. UNESCO. Used in Star Wars. Boats book months ahead.",
+    tags:["remote","ancient","unmissable"],
+    photo:"https://images.unsplash.com/photo-1590506550178-7b454fdd2d62?w=700&q=80" },
+  { id:"giants_causeway", region:"Northern Ireland", name:"Giants Causeway",
+    desc:"40,000 interlocking hexagonal basalt columns on the Antrim coast. Weirder in person than any photo. Go early morning.",
+    tags:["nature","weird","iconic"],
+    photo:"https://images.unsplash.com/photo-1564760290292-23341e4df6ec?w=700&q=80" },
+  { id:"causeway_coast", region:"Northern Ireland", name:"Causeway Coastal Route",
+    desc:"Dunluce Castle ruins on a cliff, Carrick-a-Rede rope bridge over a sea gorge, Dark Hedges tunnel of ancient beech trees. One full day.",
+    tags:["coast","castle","landscape"],
+    photo:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80" },
+  { id:"belfast", region:"Northern Ireland", name:"Belfast",
+    desc:"Political murals, Titanic Quarter, genuinely good food scene. You pass through anyway.",
+    tags:["city","history","culture"],
+    photo:"https://images.unsplash.com/photo-1555921015-5532091f6026?w=700&q=80" },
+  { id:"glencoe", region:"Scottish Highlands", name:"Glencoe Valley",
+    desc:"Dark, enormous, silent. One of the most dramatic valleys in Europe. You drive through it and it swallows you whole.",
+    tags:["nature","landscape","iconic"],
+    photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80" },
+  { id:"glen_etive", region:"Scottish Highlands", name:"Glen Etive",
+    desc:"A side road off Glencoe almost no one takes. Used in Skyfall. River, mountains, complete quiet.",
+    tags:["remote","nature","hidden"],
+    photo:"https://images.unsplash.com/photo-1548199569-3e1c6aa8f469?w=700&q=80" },
+  { id:"eilean_donan", region:"Scottish Highlands", name:"Eilean Donan Castle",
+    desc:"A castle on a tiny island where three lochs meet. Right on the road to Skye. Photographed for a reason.",
+    tags:["castle","landscape","iconic"],
+    photo:"https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=700&q=80" },
+  { id:"loch_ness", region:"Scottish Highlands", name:"Loch Ness",
+    desc:"Skip the tourist circus. The loch itself is long, black, and genuinely eerie. It's on your route — just stop and look.",
+    tags:["nature","landscape"],
+    photo:"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80" },
+  { id:"old_man_storr", region:"Isle of Skye", name:"Old Man of Storr",
+    desc:"The iconic black pinnacle rising from mist above Skye. A real hike but not brutal. The most recognisable landscape in Scotland.",
+    tags:["hiking","landscape","iconic"],
+    photo:"https://images.unsplash.com/photo-1551009175-8a68da93d5f9?w=700&q=80" },
+  { id:"quiraing", region:"Isle of Skye", name:"The Quiraing",
+    desc:"Stranger and more dramatic than the Storr. A landslip landscape that looks almost alien. Fewer people, more scrambling.",
+    tags:["hiking","weird","landscape"],
+    photo:"https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=700&q=80" },
+  { id:"fairy_pools", region:"Isle of Skye", name:"Fairy Pools",
+    desc:"Crystal clear blue-green pools at the base of the Black Cuillins. The color is real. Short easy walk.",
+    tags:["nature","landscape","iconic"],
+    photo:"https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=700&q=80" },
+  { id:"neist_point", region:"Isle of Skye", name:"Neist Point Lighthouse",
+    desc:"The westernmost point of Skye. A cliff walk to a lonely lighthouse. Best sunset spot on the entire trip.",
+    tags:["coast","landscape"],
+    photo:"https://images.unsplash.com/photo-1600267204055-87b8e4d5b9d4?w=700&q=80" },
+  { id:"arthurs_seat", region:"Edinburgh", name:"Arthur's Seat",
+    desc:"An extinct volcano inside the city. Real hike, about 90 minutes up. Panoramic views over Edinburgh.",
+    tags:["hiking","nature","city"],
+    photo:"https://images.unsplash.com/photo-1567679258673-58cc400e2e5e?w=700&q=80" },
+  { id:"edinburgh_old_town", region:"Edinburgh", name:"Edinburgh Old Town",
+    desc:"The castle on the rock, the Royal Mile, medieval closes to get lost in. One of the best cities in Europe.",
+    tags:["city","history","architecture"],
+    photo:"https://images.unsplash.com/photo-1501261266023-b05e5b7a8f90?w=700&q=80" },
+  { id:"greyfriars", region:"Edinburgh", name:"Greyfriars Kirkyard",
+    desc:"One of Edinburgh's oldest cemeteries. Beautiful, strange, allegedly very haunted. Short detour off the Royal Mile.",
+    tags:["weird","history"],
+    photo:"https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=700&q=80" },
+  { id:"avebury", region:"England — Wiltshire", name:"Avebury Stone Circle",
+    desc:"Larger than Stonehenge. You walk among the stones. A whole village is built inside the circle. A fraction of the crowds.",
+    tags:["ancient","weird","iconic"],
+    photo:"https://images.unsplash.com/photo-1563639234-e543d69b7059?w=700&q=80" },
+  { id:"stonehenge", region:"England — Wiltshire", name:"Stonehenge",
+    desc:"You know what it is. You're kept at a distance on a rope line. 25 minutes from Avebury — easy to do both.",
+    tags:["ancient","iconic"],
+    photo:"https://images.unsplash.com/photo-1599930113854-d6d7fd521f10?w=700&q=80" },
+  { id:"uffington", region:"England — Oxfordshire", name:"Uffington White Horse",
+    desc:"A Bronze Age chalk figure on a hilltop. Abstract, strange, 3,000 years old. You can't fully see it from ground level. That somehow makes it better.",
+    tags:["ancient","weird","landscape"],
+    photo:"https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=700&q=80" }
+];
+
+const REGIONS_ORDER = [
+  "Dublin & Meath","East Ireland","South Ireland","West Ireland",
+  "Southwest Ireland","Northern Ireland","Scottish Highlands",
+  "Isle of Skye","Edinburgh","England — Wiltshire","England — Oxfordshire"
+];
+
+const ratings = { p1:{}, p2:{} };
+let currentPerson = "p1";
+
+function getScoreColor(s) {
+  if (!s) return "var(--text3)";
+  if (s >= 8) return "var(--green2)";
+  if (s >= 5) return "var(--gorse)";
+  return "#c06050";
+}
+
+function buildSurveyView(person) {
+  const byRegion = {};
+  REGIONS_ORDER.forEach(r => byRegion[r] = []);
+  STOPS.forEach(s => { if (byRegion[s.region]) byRegion[s.region].push(s); });
+  let html = "";
+  REGIONS_ORDER.forEach(region => {
+    const stops = byRegion[region];
+    if (!stops.length) return;
+    html += `<div class="region-header"><h2>${region}</h2></div><div class="stops-grid">`;
+    stops.forEach(stop => {
+      html += `<div class="stop-card" id="${person}-card-${stop.id}">
+        <div class="photo-wrap">
+          <img src="${stop.photo}" alt="${stop.name}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="photo-placeholder" style="display:none">${stop.name}</div>
+          <div class="score-badge" id="${person}-badge-${stop.id}">—</div>
+        </div>
+        <div class="card-body">
+          <div class="tags">${stop.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+          <div class="card-name">${stop.name}</div>
+          <div class="card-desc">${stop.desc}</div>
+          <div class="slider-row">
+            <div class="slider-end-label">1<br>nope</div>
+            <input type="range" class="score-slider" min="1" max="10" step="1" value="5"
+              id="${person}-slider-${stop.id}"
+              oninput="updateRating('${person}','${stop.id}',this.value)">
+            <div class="slider-end-label">10<br>dying</div>
+            <div class="score-num" id="${person}-num-${stop.id}">—</div>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  return html;
+}
+
+function updateRating(person, stopId, val) {
+  const v = parseInt(val);
+  ratings[person][stopId] = v;
+  const color = getScoreColor(v);
+  const num = document.getElementById(`${person}-num-${stopId}`);
+  const badge = document.getElementById(`${person}-badge-${stopId}`);
+  if (num) { num.textContent = v; num.style.color = color; }
+  if (badge) { badge.textContent = v; badge.style.color = color; badge.style.borderColor = color; badge.classList.add("visible"); }
+  if (person === currentPerson) updateFooter();
+}
+
+function updateFooter() {
+  const rated = Object.keys(ratings[currentPerson]).length;
+  document.getElementById("footer-rated").textContent = rated;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".t-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`view-${tab}`).classList.add("active");
+  ["p1","p2","results"].forEach((t,i) => {
+    if (t === tab) document.querySelectorAll(".t-btn")[i].classList.add("active");
+  });
+  if (tab !== "results") {
+    currentPerson = tab;
+    document.getElementById("footer-person").textContent = tab === "p1" ? "Traveler 1" : "Traveler 2";
+    updateFooter();
+  }
+  if (tab === "results") buildResults();
+}
+
+function scorePillClass(s) {
+  if (!s) return "score-none";
+  if (s >= 8) return "score-high";
+  if (s >= 5) return "score-mid";
+  return "score-low";
+}
+
+function buildResults() {
+  const p1 = ratings.p1, p2 = ratings.p2;
+  const scored = STOPS.map(s => {
+    const s1 = p1[s.id]||0, s2 = p2[s.id]||0;
+    return {...s, s1, s2, combined: s1+s2, diff: Math.abs(s1-s2)};
+  }).sort((a,b) => b.combined - a.combined);
+
+  const byRegion = {};
+  REGIONS_ORDER.forEach(r => byRegion[r] = []);
+  scored.forEach(s => { if (byRegion[s.region]) byRegion[s.region].push(s); });
+
+  const bigSplit = scored.filter(s => s.diff >= 5 && (s.s1 >= 7 || s.s2 >= 7));
+
+  let html = `<h2 class="results-title">Your combined results</h2>
+    <p class="results-sub">Sorted by combined score within each region. Scores shown as Traveler 1 / Traveler 2. Conflicts flagged below.</p>`;
+
+  REGIONS_ORDER.forEach(region => {
+    const stops = byRegion[region];
+    if (!stops.length) return;
+    const anyRated = stops.some(s => s.s1 > 0 || s.s2 > 0);
+    if (!anyRated) return;
+    html += `<div class="result-region-block"><div class="result-region-label">${region}</div>`;
+    stops.forEach(s => {
+      if (!s.s1 && !s.s2) return;
+      let bClass = "badge-low", bText = "Low interest";
+      if (s.s1 >= 8 && s.s2 >= 8)      { bClass="badge-fire";   bText="Both love it"; }
+      else if (s.combined >= 14)         { bClass="badge-fire";   bText="Strong match"; }
+      else if (s.combined >= 10)         { bClass="badge-strong"; bText="Good match"; }
+      else if (s.diff >= 5)              { bClass="badge-split";  bText="Split opinion"; }
+
+      const p1pill = `<span class="score-pill ${scorePillClass(s.s1)}">${s.s1||"—"}</span>`;
+      const p2pill = `<span class="score-pill ${scorePillClass(s.s2)}">${s.s2||"—"}</span>`;
+      html += `<div class="result-row">
+        <div class="result-name">${s.name}</div>
+        ${p1pill}${p2pill}
+        <span class="combined-badge ${bClass}">${bText}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (bigSplit.length) {
+    html += `<div class="section-head">Conversations to have — big disagreements</div>`;
+    bigSplit.forEach(s => {
+      html += `<div class="conflict-card"><strong>${s.name}</strong>
+        T1: ${s.s1||"—"}/10 &nbsp;·&nbsp; T2: ${s.s2||"—"}/10 &nbsp;·&nbsp; Gap of ${s.diff} points.
+      </div>`;
+    });
+  }
+
+  html += buildItinerary(scored);
+  html += `<button class="back-btn" onclick="switchTab('p1')">← Back to rating</button>`;
+  document.getElementById("results-content").innerHTML = html;
+}
+
+function buildItinerary(scored) {
+  const topIds = new Set(scored.filter(s => s.combined >= 12).map(s => s.id));
+  const has = id => topIds.has(id);
+  const inWest = ["connemara","cliffs_moher","burren","kylemore"].some(has);
+  const inSW   = ["skellig_michael","dingle"].some(has);
+  const inNI   = ["giants_causeway","causeway_coast"].some(has);
+  const inScot = ["glencoe","eilean_donan","old_man_storr","quiraing","fairy_pools","neist_point"].some(has);
+  const inEdin = ["edinburgh_old_town","arthurs_seat","greyfriars"].some(has);
+  const inEng  = ["avebury","stonehenge","uffington"].some(has);
+
+  let days = [];
+  days.push({day:"June 25",title:"Dublin — arrive, recover",desc:"Land at 11:30am. Pick up the car. Get oriented. Kilmainham Gaol if you have energy, otherwise find a good pub."});
+
+  if (has("newgrange")) {
+    days.push({day:"Day 1 — June 26",title:"Newgrange → north",desc:"Newgrange in the morning (1hr from Dublin, on the way north). Then drive toward the Antrim coast."});
+  } else if (inWest || inSW) {
+    days.push({day:"Day 1 — June 26",title:"Dublin → West Ireland",desc:"Drive west. Wicklow Mountains en route if you rated them, otherwise straight to Galway area."});
+  } else {
+    days.push({day:"Day 1 — June 26",title:"Dublin → Northern Ireland",desc:"Drive north through Belfast. Reach the Antrim coast by evening."});
+  }
+
+  if (inWest) {
+    days.push({day:"Day 2",title:"Burren, Cliffs of Moher, Connemara",desc:"The Burren and Cliffs in one sweep. Connemara in the afternoon. Base in Galway."});
+    days.push({day:"Day 3",title:"Connemara → Kylemore → north",desc:"Morning in Connemara. Kylemore Abbey on the way out. Drive north toward Northern Ireland."});
+  }
+  if (inSW && !inWest) {
+    days.push({day:"Day 2",title:"Southwest Ireland",desc:"Dingle Peninsula or Skellig Michael if you got a boat. Then start moving north."});
+  }
+  if (inNI) {
+    days.push({day:inWest?"Day 4":"Day 2",title:"Causeway Coast",desc:"Giants Causeway early morning. Dunluce Castle, Dark Hedges, Carrick-a-Rede rope bridge. Stay on the Antrim coast."});
+  }
+  if (inScot) {
+    days.push({day:"Next day",title:"Ferry → Glencoe",desc:"Larne or Belfast to Cairnryan (~2hrs). Drive north through Glencoe. Stop, get out, let it hit you."});
+    days.push({day:"Following day",title:"Isle of Skye",desc:"Full day. Fairy Pools, Quiraing or Old Man of Storr, Neist Point for sunset."});
+    days.push({day:"Following day",title:"Skye → Edinburgh",desc:"Eilean Donan Castle on the way out. Loch Ness if time. Arrive Edinburgh evening."});
+  }
+  if (inEdin) {
+    days.push({day:"Edinburgh day",title:"Edinburgh",desc:"Arthur's Seat in the morning. Old Town, Royal Mile, Greyfriars Kirkyard."});
+  }
+  if (inEng) {
+    days.push({day:"July 2",title:"→ Avebury + Uffington → London",desc:"Train or fly south, rent a car, hit Avebury and Uffington White Horse en route. Arrive London evening."});
+  } else {
+    days.push({day:"July 2",title:"→ London",desc:"Train (4.5hrs from Edinburgh) or fly. Easy day. Settle in before tomorrow."});
+  }
+  days.push({day:"July 3",title:"Wembley",desc:"The whole reason you need to be in London."});
+
+  let html = `<div class="section-head">Suggested trip shape — based on your top-rated stops</div>`;
+  days.forEach(d => {
+    html += `<div class="itinerary-card">
+      <div class="itin-day">${d.day}</div>
+      <div class="itin-title">${d.title}</div>
+      <div class="itin-desc">${d.desc}</div>
+    </div>`;
+  });
+  return html;
+}
+
+document.getElementById("view-p1").innerHTML = buildSurveyView("p1");
+document.getElementById("view-p2").innerHTML = buildSurveyView("p2");
+document.getElementById("footer-total").textContent = STOPS.length;
+</script>
+</body>
+</html>
