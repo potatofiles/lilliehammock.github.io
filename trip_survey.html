@@ -484,8 +484,8 @@
 </div>
 
 <div class="traveler-bar">
-  <button class="t-btn active" onclick="switchTab('p1')">Traveler 1</button>
-  <button class="t-btn" onclick="switchTab('p2')">Traveler 2</button>
+  <button class="t-btn active" onclick="switchTab('p1')">Candace</button>
+  <button class="t-btn" onclick="switchTab('p2')">Lillie</button>
   <button class="t-btn" onclick="switchTab('results')">Compare</button>
 </div>
 
@@ -498,7 +498,7 @@
 <div class="sticky-footer">
   <div class="footer-progress">
     <span id="footer-rated">0</span> of <span id="footer-total">27</span> rated
-    &nbsp;·&nbsp; <span id="footer-person">Traveler 1</span>
+    &nbsp;·&nbsp; <span id="footer-person">Candace</span>
   </div>
   <button class="btn-results" onclick="switchTab('results')">See Results →</button>
 </div>
@@ -693,7 +693,7 @@ function switchTab(tab) {
   });
   if (tab !== "results") {
     currentPerson = tab;
-    document.getElementById("footer-person").textContent = tab === "p1" ? "Traveler 1" : "Traveler 2";
+    document.getElementById("footer-person").textContent = tab === "p1" ? "Candace" : "Lillie";
     updateFooter();
   }
   if (tab === "results") buildResults();
@@ -720,7 +720,7 @@ function buildResults() {
   const bigSplit = scored.filter(s => s.diff >= 5 && (s.s1 >= 7 || s.s2 >= 7));
 
   let html = `<h2 class="results-title">Your combined results</h2>
-    <p class="results-sub">Sorted by combined score within each region. Scores shown as Traveler 1 / Traveler 2. Conflicts flagged below.</p>`;
+    <p class="results-sub">Sorted by combined score within each region. Scores shown as Candace / Lillie. Conflicts flagged below.</p>`;
 
   REGIONS_ORDER.forEach(region => {
     const stops = byRegion[region];
