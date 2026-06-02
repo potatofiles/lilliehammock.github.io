@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ireland & Scotland — Rate the Stops</title>
+<style>
+  :root {
+    --bg: #181f12;
+    --bg2: #1e2817;
+    --card: #22301a;
+    --border: rgba(140,180,80,0.13);
+    --border2: rgba(140,180,80,0.25);
+    --text: #e8e2d0;
+    --text2: #a8b898;
+    --text3: #6a7d58;
+    --green: #7cba3f;
+    --green2: #9ed45a;
+    --green-dark: #3a5a1a;
+    --gorse: #d4a832;
+    --brown-light: #c49a6c;
+    --cream: #e8dfc4;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    padding: 0 0 5rem;
+  }
+
+  .site-header {
+    text-align: center;
+    padding: 3rem 1.5rem 1.8rem;
+    background: linear-gradient(180deg, #0f1a09 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border2);
+    margin-bottom: 0.5rem;
+  }
+
+  .site-header h1 {
+    font-size: 1.8rem;
+    font-weight: normal;
+    letter-spacing: 0.07em;
+    color: var(--green2);
+    margin-bottom: 0.4rem;
+  }
+
+  .site-header p {
+    font-size: 0.85rem;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  .traveler-bar {
+    display: flex;
+    justify-content: center;
+    padding: 0.9rem 1.5rem;
+    position: sticky;
+    top: 0;
+    background: rgba(24,31,18,0.97);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .t-btn {
+    padding: 0.5rem 1.5rem;
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-family: inherit;
+    font-size: 0.82rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .t-btn:first-child { border-radius: 6px 0 0 6px; }
+  .t-btn:last-child  { border-radius: 0 6px 6px 0; }
+  .t-btn:not(:first-child) { border-left: none; }
+
+  .t-btn.active {
+    background: var(--green-dark);
+    color: var(--green2);
+    border-color: var(--green);
+    font-weight: bold;
+  }
+
+  .t-btn:hover:not(.active) {
+    background: rgba(124,186,63,0.07);
+    color: var(--text2);
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .stop-list {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .stop-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.15s;
+  }
+
+  .stop-row:hover { border-color: var(--border2); }
+
+  .stop-info { flex: 1; min-width: 0; }
+
+  .stop-name-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.2rem;
+  }
+
+  .stop-name {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: var(--cream);
+  }
+
+  .wiki-link {
+    font-size: 0.7rem;
+    color: var(--text3);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    border-bottom: 1px dotted var(--text3);
+    transition: color 0.15s;
+    white-space: nowrap;
+  }
+
+  .wiki-link:hover { color: var(--green2); border-bottom-color: var(--green2); }
+
+  .stop-desc {
+    font-size: 0.76rem;
+    color: var(--text2);
+    font-style: italic;
+    line-height: 1.45;
+  }
+
+  .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .end-label {
+    font-size: 0.6rem;
+    color: var(--text3);
+    line-height: 1.3;
+    text-align: center;
+    min-width: 24px;
+  }
+
+  .score-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 120px;
+    height: 4px;
+    border-radius: 2px;
+    background: #2a3a20;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .score-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--green);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    transition: transform 0.15s;
+  }
+
+  .score-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .score-slider::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg);
+    cursor: pointer;
+  }
+
+  .score-display {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--text3);
+    min-width: 22px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.15s;
+  }
+
+  .sticky-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(24,31,18,0.97);
+    border-top: 1px solid var(--border2);
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(8px);
+    z-index: 99;
+  }
+
+  .footer-text { font-size: 0.78rem; color: var(--text2); }
+  .footer-text span { color: var(--green2); font-weight: bold; }
+
+  .btn-go {
+    padding: 0.55rem 1.4rem;
+    background: var(--green-dark);
+    color: var(--green2);
+    border: 1px solid var(--green);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.2s;
+  }
+
+  .btn-go:hover { background: #4a7a22; }
+
+  /* RESULTS */
+  .results-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .results-title {
+    font-size: 1.3rem;
+    font-weight: normal;
+    color: var(--green2);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+  }
+
+  .results-sub {
+    font-size: 0.82rem;
+    color: var(--text2);
+    font-style: italic;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .results-section-head {
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gorse);
+    border-bottom: 1px solid rgba(212,168,50,0.2);
+    padding-bottom: 0.45rem;
+    margin: 1.8rem 0 0.8rem;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(124,186,63,0.07);
+  }
+
+  .result-row:last-child { border-bottom: none; }
+
+  .result-rank {
+    font-size: 0.72rem;
+    color: var(--text3);
+    min-width: 20px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-name { flex: 1; font-size: 0.9rem; color: var(--text); }
+
+  .result-location {
+    font-size: 0.72rem;
+    color: var(--text3);
+    font-style: italic;
+    min-width: 130px;
+    text-align: right;
+  }
+
+  .score-pair {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .s-pill {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .s-high { background: rgba(124,186,63,0.15); color: var(--green2); }
+  .s-mid  { background: rgba(212,168,50,0.13); color: var(--gorse); }
+  .s-low  { background: rgba(90,62,36,0.25);   color: var(--brown-light); }
+  .s-none { background: rgba(60,70,50,0.2);    color: var(--text3); }
+
+  .combined-num {
+    font-size: 0.82rem;
+    font-weight: bold;
+    color: var(--text3);
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .flag-split {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: rgba(139,99,64,0.18);
+    color: var(--brown-light);
+    white-space: nowrap;
+  }
+
+  .back-btn {
+    margin-top: 2rem;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    display: inline-block;
+  }
+
+  .back-btn:hover { border-color: var(--green); color: var(--green2); }
+
+  @media (max-width: 580px) {
+    .score-slider { width: 80px; }
+    .result-location { display: none; }
+    .stop-row { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+    .slider-group { width: 100%; justify-content: space-between; }
+    .score-slider { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <h1>Ireland &amp; Scotland</h1>
+  <p>Rate each stop 1–10. Compare after. Figure out the route later.</p>
+</div>
+
+<div class="traveler-bar">
+  <button class="t-btn active" onclick="switchTab('p1')">Candace</button>
+  <button class="t-btn" onclick="switchTab('p2')">Lillie</button>
+  <button class="t-btn" onclick="switchTab('results')">Compare</button>
+</div>
+
+<div id="view-p1" class="view active"></div>
+<div id="view-p2" class="view"></div>
+<div id="view-results" class="view">
+  <div class="results-wrap" id="results-content"></div>
+</div>
+
+<div class="sticky-footer">
+  <div class="footer-text">
+    <span id="footer-rated">0</span> of <span id="footer-total">0</span> rated
+    &nbsp;·&nbsp; <span id="footer-person">Candace</span>
+  </div>
+  <button class="btn-go" onclick="switchTab('results')">See Results →</button>
+</div>
+
+<script>
+const STOPS = [
+  { id:"newgrange",        name:"Newgrange",                  desc:"Neolithic passage tomb older than Stonehenge. Aligned with the winter solstice sunrise.",                          location:"County Meath, Ireland",        wiki:"https://en.wikipedia.org/wiki/Newgrange" },
+  { id:"glendalough",      name:"Glendalough",                desc:"Ancient monastic ruins in a glacial valley in the Wicklow Mountains.",                                              location:"County Wicklow, Ireland",      wiki:"https://en.wikipedia.org/wiki/Glendalough" },
+  { id:"rock_cashel",      name:"Rock of Cashel",             desc:"Medieval cathedral and round tower on a dramatic rocky outcrop.",                                                   location:"County Tipperary, Ireland",    wiki:"https://en.wikipedia.org/wiki/Rock_of_Cashel" },
+  { id:"burren",           name:"The Burren",                 desc:"Lunar limestone karst landscape with ancient tombs and wildflowers growing through the cracks.",                    location:"County Clare, Ireland",        wiki:"https://en.wikipedia.org/wiki/The_Burren" },
+  { id:"cliffs_moher",     name:"Cliffs of Moher",            desc:"700 feet of cliff straight into the Atlantic.",                                                                     location:"County Clare, Ireland",        wiki:"https://en.wikipedia.org/wiki/Cliffs_of_Moher" },
+  { id:"connemara",        name:"Connemara",                  desc:"Bogland, dark mountains, silent lakes. The most ancient-feeling landscape in Ireland.",                             location:"County Galway, Ireland",       wiki:"https://en.wikipedia.org/wiki/Connemara" },
+  { id:"kylemore",         name:"Kylemore Abbey",             desc:"Gothic abbey on the edge of a lake deep in Connemara.",                                                             location:"County Galway, Ireland",       wiki:"https://en.wikipedia.org/wiki/Kylemore_Abbey" },
+  { id:"aran_islands",     name:"Aran Islands",               desc:"Remote islands off Galway with ancient stone forts on cliff edges. Irish still spoken.",                            location:"County Galway, Ireland",       wiki:"https://en.wikipedia.org/wiki/Aran_Islands" },
+  { id:"dingle",           name:"Dingle Peninsula",           desc:"Dramatic coastal drive with headlands, beaches, and good seafood. Less crowded than Ring of Kerry.",               location:"County Kerry, Ireland",        wiki:"https://en.wikipedia.org/wiki/Dingle_Peninsula" },
+  { id:"skellig_michael",  name:"Skellig Michael",            desc:"Remote rock island with a 6th century monastery at the top. 600 ancient stone steps. Boats book months ahead.",   location:"County Kerry, Ireland",        wiki:"https://en.wikipedia.org/wiki/Skellig_Michael" },
+  { id:"ring_of_kerry",    name:"Ring of Kerry",              desc:"Classic scenic coastal drive around the Iveragh Peninsula. Busy in summer but beautiful.",                         location:"County Kerry, Ireland",        wiki:"https://en.wikipedia.org/wiki/Ring_of_Kerry" },
+  { id:"giants_causeway",  name:"Giants Causeway",            desc:"40,000 interlocking hexagonal basalt columns on the Antrim coast.",                                                location:"County Antrim, N. Ireland",    wiki:"https://en.wikipedia.org/wiki/Giant%27s_Causeway" },
+  { id:"dunluce",          name:"Dunluce Castle",             desc:"Medieval castle ruins on the edge of a cliff over the ocean. Part of it fell into the sea in the 1600s.",          location:"County Antrim, N. Ireland",    wiki:"https://en.wikipedia.org/wiki/Dunluce_Castle" },
+  { id:"carrick_a_rede",   name:"Carrick-a-Rede Rope Bridge", desc:"A rope bridge suspended over a sea gorge on the Antrim coast.",                                                    location:"County Antrim, N. Ireland",    wiki:"https://en.wikipedia.org/wiki/Carrick-a-Rede_rope_bridge" },
+  { id:"dark_hedges",      name:"Dark Hedges",                desc:"A tunnel of ancient beech trees on a country road. Eerie and beautiful.",                                           location:"County Antrim, N. Ireland",    wiki:"https://en.wikipedia.org/wiki/Dark_Hedges" },
+  { id:"belfast",          name:"Belfast",                    desc:"Political murals, Titanic Quarter, good food. Worth a few hours.",                                                  location:"Northern Ireland",             wiki:"https://en.wikipedia.org/wiki/Belfast" },
+  { id:"glencoe",          name:"Glencoe Valley",             desc:"Dark, enormous, brooding Highland valley. One of the most dramatic landscapes in Europe.",                          location:"Scottish Highlands",           wiki:"https://en.wikipedia.org/wiki/Glencoe,_Highland" },
+  { id:"glen_etive",       name:"Glen Etive",                 desc:"A quiet side road off Glencoe almost no one takes. Used as a filming location in Skyfall.",                         location:"Scottish Highlands",           wiki:"https://en.wikipedia.org/wiki/Glen_Etive" },
+  { id:"eilean_donan",     name:"Eilean Donan Castle",        desc:"A castle on a tiny island where three lochs meet. Right on the road to Skye.",                                     location:"Scottish Highlands",           wiki:"https://en.wikipedia.org/wiki/Eilean_Donan" },
+  { id:"loch_ness",        name:"Loch Ness",                  desc:"Long, dark, eerie loch in the Highlands. The loch itself is worth seeing regardless of the tourist circus.",       location:"Scottish Highlands",           wiki:"https://en.wikipedia.org/wiki/Loch_Ness" },
+  { id:"old_man_storr",    name:"Old Man of Storr",           desc:"The iconic black pinnacle rising from mist on the Isle of Skye. A real but manageable hike.",                      location:"Isle of Skye, Scotland",       wiki:"https://en.wikipedia.org/wiki/The_Storr" },
+  { id:"quiraing",         name:"The Quiraing",               desc:"A landslip landscape on Skye that looks almost alien. Stranger than the Storr, fewer people.",                     location:"Isle of Skye, Scotland",       wiki:"https://en.wikipedia.org/wiki/Quiraing" },
+  { id:"fairy_pools",      name:"Fairy Pools",                desc:"Crystal clear blue-green pools at the base of the Black Cuillins. Short easy walk.",                               location:"Isle of Skye, Scotland",       wiki:"https://en.wikipedia.org/wiki/Fairy_Pools" },
+  { id:"neist_point",      name:"Neist Point Lighthouse",     desc:"Westernmost point of Skye. A cliff walk to a lonely lighthouse. Best sunset spot on the trip.",                    location:"Isle of Skye, Scotland",       wiki:"https://en.wikipedia.org/wiki/Neist_Point" },
+  { id:"kilt_rock",        name:"Kilt Rock & Mealt Falls",    desc:"A sea cliff with a waterfall dropping straight into the ocean.",                                                    location:"Isle of Skye, Scotland",       wiki:"https://en.wikipedia.org/wiki/Kilt_Rock" },
+  { id:"arthurs_seat",     name:"Arthur's Seat",              desc:"An extinct volcano in the middle of Edinburgh. Real hike, panoramic views over the city.",                         location:"Edinburgh, Scotland",          wiki:"https://en.wikipedia.org/wiki/Arthur%27s_Seat" },
+  { id:"edinburgh",        name:"Edinburgh Old Town",         desc:"The castle on the rock, the Royal Mile, medieval closes to get lost in.",                                           location:"Edinburgh, Scotland",          wiki:"https://en.wikipedia.org/wiki/Edinburgh_Old_Town" },
+  { id:"greyfriars",       name:"Greyfriars Kirkyard",        desc:"One of Edinburgh's oldest cemeteries. Beautiful, strange, allegedly very haunted.",                                location:"Edinburgh, Scotland",          wiki:"https://en.wikipedia.org/wiki/Greyfriars_Kirkyard" },
+  { id:"avebury",          name:"Avebury Stone Circle",       desc:"Larger than Stonehenge. You walk among the stones. A village is built inside the circle.",                         location:"Wiltshire, England",           wiki:"https://en.wikipedia.org/wiki/Avebury" },
+  { id:"stonehenge",       name:"Stonehenge",                 desc:"You know what it is. You're kept at a distance on a rope line. 25 minutes from Avebury.",                          location:"Wiltshire, England",           wiki:"https://en.wikipedia.org/wiki/Stonehenge" },
+  { id:"uffington",        name:"Uffington White Horse",      desc:"A Bronze Age chalk figure on a hilltop. Abstract, strange, 3,000 years old.",                                      location:"Oxfordshire, England",         wiki:"https://en.wikipedia.org/wiki/Uffington_White_Horse" },
+  { id:"hadrians_wall",    name:"Hadrian's Wall",             desc:"Roman-era wall running across northern England. Surprisingly affecting in person.",                                 location:"Northern England",             wiki:"https://en.wikipedia.org/wiki/Hadrian%27s_Wall" }
+];
+
+const ratings = { p1:{}, p2:{} };
+let currentPerson = "p1";
+const NAMES = { p1:"Candace", p2:"Lillie" };
+
+function scoreClass(s) {
+  if (!s) return "s-none";
+  if (s >= 8) return "s-high";
+  if (s >= 5) return "s-mid";
+  return "s-low";
+}
+
+function scoreColor(s) {
+  if (!s) return "var(--text3)";
+  if (s >= 8) return "var(--green2)";
+  if (s >= 5) return "var(--gorse)";
+  return "var(--brown-light)";
+}
+
+function buildList(person) {
+  let html = `<div class="stop-list">`;
+  STOPS.forEach(stop => {
+    html += `<div class="stop-row">
+      <div class="stop-info">
+        <div class="stop-name-line">
+          <span class="stop-name">${stop.name}</span>
+          <a class="wiki-link" href="${stop.wiki}" target="_blank" rel="noopener">wikipedia ↗</a>
+        </div>
+        <div class="stop-desc">${stop.desc}</div>
+      </div>
+      <div class="slider-group">
+        <div class="end-label">1<br>nope</div>
+        <input type="range" class="score-slider" min="1" max="10" step="1" value="5"
+          id="${person}-slider-${stop.id}"
+          oninput="rate('${person}','${stop.id}',this.value)">
+        <div class="end-label">10<br>yes</div>
+        <div class="score-display" id="${person}-num-${stop.id}">—</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function rate(person, id, val) {
+  const v = parseInt(val);
+  ratings[person][id] = v;
+  const num = document.getElementById(`${person}-num-${id}`);
+  if (num) { num.textContent = v; num.style.color = scoreColor(v); }
+  if (person === currentPerson) {
+    document.getElementById("footer-rated").textContent = Object.keys(ratings[person]).length;
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".t-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`view-${tab}`).classList.add("active");
+  ["p1","p2","results"].forEach((t,i) => {
+    if (t === tab) document.querySelectorAll(".t-btn")[i].classList.add("active");
+  });
+  if (tab !== "results") {
+    currentPerson = tab;
+    document.getElementById("footer-person").textContent = NAMES[tab];
+    document.getElementById("footer-rated").textContent = Object.keys(ratings[tab]).length;
+  }
+  if (tab === "results") buildResults();
+}
+
+function buildResults() {
+  const p1 = ratings.p1, p2 = ratings.p2;
+  const scored = STOPS.map(s => {
+    const s1 = p1[s.id]||0, s2 = p2[s.id]||0;
+    return { ...s, s1, s2, combined: s1+s2, diff: Math.abs(s1-s2) };
+  }).sort((a,b) => b.combined - a.combined);
+
+  const rated = scored.filter(s => s.s1 > 0 || s.s2 > 0);
+  const bothHigh  = rated.filter(s => s.s1 >= 7 && s.s2 >= 7);
+  const goodMatch = rated.filter(s => s.combined >= 10 && !(s.s1 >= 7 && s.s2 >= 7));
+  const splits    = rated.filter(s => s.diff >= 4 && (s.s1 >= 7 || s.s2 >= 7));
+  const lowBoth   = rated.filter(s => s.combined <= 8 && s.diff < 4);
+
+  const p1name = NAMES.p1, p2name = NAMES.p2;
+
+  let html = `
+    <h2 class="results-title">Combined results</h2>
+    <p class="results-sub">Sorted by priority. Location shown on the right — use it to figure out routing after.</p>
+  `;
+
+  if (bothHigh.length) {
+    html += `<div class="results-section-head">Both want this — build the trip around these</div>`;
+    bothHigh.forEach((s, i) => { html += resultRow(s, i+1, p1name, p2name); });
+  }
+
+  if (goodMatch.length) {
+    html += `<div class="results-section-head">Strong combined interest</div>`;
+    goodMatch.forEach((s, i) => { html += resultRow(s, i+1, p1name, p2name); });
+  }
+
+  if (splits.length) {
+    html += `<div class="results-section-head">One person really wants it — talk it out</div>`;
+    splits.forEach((s, i) => { html += resultRow(s, i+1, p1name, p2name, true); });
+  }
+
+  if (lowBoth.length) {
+    html += `<div class="results-section-head">Both rated low — probably skip</div>`;
+    lowBoth.forEach((s, i) => { html += resultRow(s, i+1, p1name, p2name); });
+  }
+
+  if (!rated.length) {
+    html += `<p style="color:var(--text2);font-style:italic;margin-top:1rem">Rate some stops first, then come back here.</p>`;
+  }
+
+  html += `<button class="back-btn" onclick="switchTab('p1')">← Back to rating</button>`;
+  document.getElementById("results-content").innerHTML = html;
+}
+
+function resultRow(s, i, p1name, p2name, isSplit) {
+  const p1pill = `<span class="s-pill ${scoreClass(s.s1)}">${s.s1||"—"}</span>`;
+  const p2pill = `<span class="s-pill ${scoreClass(s.s2)}">${s.s2||"—"}</span>`;
+  const splitFlag = isSplit ? `<span class="flag-split">split</span>` : "";
+  return `<div class="result-row">
+    <div class="result-rank">${i}</div>
+    <div class="result-name">${s.name} ${splitFlag}</div>
+    <div class="result-location">${s.location}</div>
+    <div class="score-pair">${p1pill}${p2pill}</div>
+  </div>`;
+}
+
+// init
+document.getElementById("view-p1").innerHTML = buildList("p1");
+document.getElementById("view-p2").innerHTML = buildList("p2");
+document.getElementById("footer-total").textContent = STOPS.length;
+</script>
+</body>
+</html>
